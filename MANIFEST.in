@@ -1,0 +1,18 @@
+include MANIFEST.in
+include requirements.txt
+include *.json
+include *.md
+include *.py
+include *.txt
+recursive-include sage_integration *.css
+recursive-include sage_integration *.csv
+recursive-include sage_integration *.html
+recursive-include sage_integration *.ico
+recursive-include sage_integration *.js
+recursive-include sage_integration *.json
+recursive-include sage_integration *.md
+recursive-include sage_integration *.png
+recursive-include sage_integration *.py
+recursive-include sage_integration *.svg
+recursive-include sage_integration *.txt
+recursive-exclude sage_integration *.pyc
