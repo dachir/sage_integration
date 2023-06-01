@@ -1,0 +1,163 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:nom",
+ "creation": "2023-04-13 10:59:41.079133",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "nom",
+  "rue",
+  "quartier",
+  "commune",
+  "reference",
+  "telephone",
+  "autorite",
+  "column_break_8",
+  "ingredients",
+  "autres_ventes",
+  "nb_de_sacs_jour",
+  "nb_de_pain_jour",
+  "nb_de_clients_jour",
+  "total_clients",
+  "enqueteur",
+  "map_section",
+  "latitude",
+  "column_break_13",
+  "longitude"
+ ],
+ "fields": [
+  {
+   "fieldname": "nom",
+   "fieldtype": "Data",
+   "label": "Nom",
+   "unique": 1
+  },
+  {
+   "fieldname": "rue",
+   "fieldtype": "Data",
+   "label": "Rue"
+  },
+  {
+   "fieldname": "quartier",
+   "fieldtype": "Link",
+   "label": "Quartier",
+   "options": "Quartier"
+  },
+  {
+   "fieldname": "commune",
+   "fieldtype": "Link",
+   "label": "Commune",
+   "options": "Commune"
+  },
+  {
+   "fieldname": "reference",
+   "fieldtype": "Data",
+   "label": "Reference"
+  },
+  {
+   "fieldname": "telephone",
+   "fieldtype": "Data",
+   "label": "Telephone"
+  },
+  {
+   "fieldname": "ingredients",
+   "fieldtype": "Table MultiSelect",
+   "label": "Ingredients",
+   "options": "Ingredient"
+  },
+  {
+   "fieldname": "autres_ventes",
+   "fieldtype": "Table MultiSelect",
+   "hidden": 1,
+   "label": "Autres Ventes",
+   "options": "Autre Vente"
+  },
+  {
+   "fieldname": "autorite",
+   "fieldtype": "Data",
+   "label": "Autorite"
+  },
+  {
+   "fieldname": "column_break_8",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "map_section",
+   "fieldtype": "Section Break",
+   "label": "Location"
+  },
+  {
+   "fieldname": "latitude",
+   "fieldtype": "Data",
+   "label": "Latitude",
+   "read_only": 1
+  },
+  {
+   "fieldname": "longitude",
+   "fieldtype": "Data",
+   "label": "Longitude",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_13",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "nb_de_sacs_jour",
+   "fieldtype": "Int",
+   "label": "Nb de Sacs Jour"
+  },
+  {
+   "fieldname": "nb_de_pain_jour",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Nb de Pain Jour"
+  },
+  {
+   "fieldname": "nb_de_clients_jour",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Nb de Clients Jour"
+  },
+  {
+   "fieldname": "total_clients",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Total Clients"
+  },
+  {
+   "fieldname": "enqueteur",
+   "fieldtype": "Data",
+   "label": "Enqueteur",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2023-05-04 09:29:35.850580",
+ "modified_by": "Administrator",
+ "module": "Sage Integration",
+ "name": "Boulangerie",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

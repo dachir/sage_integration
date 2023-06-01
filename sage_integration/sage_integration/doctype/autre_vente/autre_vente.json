@@ -1,0 +1,33 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2023-04-13 10:55:53.589046",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "libelle"
+ ],
+ "fields": [
+  {
+   "fieldname": "libelle",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Libelle",
+   "options": "Produit"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2023-04-13 11:01:24.601084",
+ "modified_by": "Administrator",
+ "module": "Sage Integration",
+ "name": "Autre Vente",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
