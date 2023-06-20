@@ -84,13 +84,13 @@ def create_issue_xml_doc(is_doc):
 
     return root_xml
 
-def create_issue(name):
+def create_issue(name,public_name='ZSMO'):
     is_doc = frappe.get_doc("Stock Entry", name)
     xmlInput = create_issue_xml_doc(is_doc)
     CContext, client = define_header_xml()
 
     with client.settings(strict=False):
-        data = client.service.save(callContext=CContext, publicName='ZSMO', objectXml=ET.tostring(xmlInput))
+        data = client.service.save(callContext=CContext, publicName=public_name, objectXml=ET.tostring(xmlInput))
 
     result = data.resultXml
     xmlInput2 = ET.fromstring(result)
@@ -135,10 +135,11 @@ def create_issue_from_reception_in_sage(json_data):
         data = client.service.save(callContext=CContext, publicName='ZSMO', objectXml=ET.tostring(root_xml))
 
     result = data.resultXml
-    xmlInput2 = ET.fromstring(result)
-    code = xmlInput2.findall(".//GRP[@ID='SMO0_1']/FLD[@NAME='VCRNUM']")[0].text
+    #xmlInput2 = ET.fromstring(result)
+    #code = xmlInput2.findall(".//GRP[@ID='SMO0_1']/FLD[@NAME='VCRNUM']")[0].text
+    result2 = json.loads(data.resultXml)
 
-    return code
+    return result2['SMO0_1']['VCRNUM']
 
 
 def create_reception_xml_doc(is_doc):
@@ -173,16 +174,33 @@ def create_reception_xml_doc(is_doc):
 
 def create_reception_from_sage(data):
     items = []
+    conn = pymssql.connect("172.16.0.40:49954", "erpnext", "Xn5uFLyR", "dc7x3v12")
+    cursor = conn.cursor(as_dict=True)
+    line = {}
     for r in data["PTH1_2"]:
-        line = {
-            "t.warehouse": r["LOC"],
-            "item_code": r["ITMREF"],
-            "qty": r["QTYSTU"],
-        }
+        cursor.execute("SELECT i.ITMREF_0, i.TCLCOD_0, m.AVC_0 FROM LIVE.ITMMASTER i INNER JOIN LIVE.ITMMVT m ON m.ITMREF_0 = i.ITMREF_0 WHERE m.STOFCY_0 = 'M0001' AND i.ITMREF_0 = '" + r['ITMREF'] + "'")
+        code_cost_center = 'CC013' if row['TCLCOD_0'] == 'MRKT' else 'CC016' if row['TCLCOD_0'] == 'ITEQP' else 'CC017' if row['TCLCOD_0'] == 'ADMFO' or row['TCLCOD_0'] == 'OFF' or row['TCLCOD_0'] == 'STAT' else 'CC010' if row['TCLCOD_0'] == 'LABCH' else 'CC008'
+        cost_center = frappe.get_value("Cost Center", {"cost_center_number" : code_cost_center}, "name")
+        for row in cursor:
+            line = {
+                "t_warehouse": r["LOC"] + " - MES",
+                "item_code": r["ITMREF"],
+                "qty": r["QTYSTU"],
+                "basic_rate": row["AVC_0"],
+                "branch": 'Kinshasa',
+                "cost_center": cost_center,
+            }
+            items.append(line)
     br_doc = frappe._dict({
+        "doctype": "Stock Entry",
         "company": "Marsavco Engg Stock",
         "stock_entry_type": "Material Receipt",
+        "items" : items
     })
+    doc = frappe.get_doc(br_doc)
+    doc.insert()
+    doc.submit()
+    frappe.db.commit()
 
 def define_header_json():
     client = zeep.Client('http://dc7-web.marsavco.com:8124/soap-wsdl/syracuse/collaboration/syracuse/CAdxWebServiceXmlCC?wsdl')
@@ -236,9 +254,9 @@ def get_today_receipt():
         
         result2 = json.loads(data.resultXml)
         if result2['PRHFCY'] == "M0001":
-            cost = create_issue_from_reception_in_sage(result2)
-            if cost != -1 :
-                create_reception_from_sage(result2,cost)
+            code = create_issue_from_reception_in_sage(result2)
+            if code != -1 :
+                create_reception_from_sage(result2)
 
         
        

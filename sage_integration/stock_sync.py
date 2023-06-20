@@ -1,7 +1,7 @@
 import frappe
 from frappe.utils import getdate, nowtime
 import pymssql
-
+import time
 
 def stock_sync_kin():
     conn = pymssql.connect("172.16.0.40:49954", "erpnext", "Xn5uFLyR", "dc7x3v12")
@@ -16,8 +16,17 @@ def stock_sync_kin():
         """
     )
 
-    stock_doc = create_header()
-    annule_stock(stock_doc)
+    items_doc = frappe.db.sql(
+                """
+                select s.item_code, s.warehouse, b.batch_qty, b.name, b.item_name 
+                from `tabBin` s inner join `tabBatch` b on s.item_code = b.item
+                inner join `tabWarehouse` w on w.name = s.warehouse
+                where s.warehouse like '%_Sage - MES' and s.actual_qty <>0 and w.company = 'Marsavco Engg Stock'
+                """, as_dict=1                  
+            )
+    if len(items_doc) > 0:
+        annule_stock(items_doc)
+        time.sleep(1800)
 
     stock_doc = create_header()
 
@@ -52,25 +61,31 @@ def create_header():
         "posting_time": nowtime(),
     })
 
-def annule_stock(stock_doc):
-    items = stock_doc.get_items_2(None, "Sage - MES")
+def annule_stock(items_doc):
+    
+    #items = stock_doc.get_items_2(None, "Sage - MES")
     rows = []
-    for i in items:
+    for i in items_doc:
         item_args = frappe._dict({
-            "item_code" : i["item_code"],
-            "item_name" : i["item_name"],
-            "warehouse" : i["warehouse"],
+            "item_code" : i.item_code,
+            "item_name" : i.item_name,
+            "warehouse" : i.warehouse,
             "qty": 0,
-            "valuation_rate" : i["valuation_rate"],
-            "batch_no" : i["batch_no"],
+            "valuation_rate" : i.valuation_rate,
+            "batch_no" : i.name,
         })
         rows.append(item_args)
 
     if rows :
+        stock_doc = create_header()
         stock_doc.update({ 'items': rows, })
-        frappe.msgprint(str(stock_doc))
+        #frappe.msgprint(str(stock_doc))
         stock_doc.insert()
         stock_doc.submit()
         frappe.db.commit()
     else:
         frappe.db.rollback()
+
+def call_stock():
+    # Enqueue the background task with a custom timeout value
+    frappe.enqueue(stock_sync_kin, timeout=3600)

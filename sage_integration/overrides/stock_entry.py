@@ -19,7 +19,7 @@ class CustomStockEntry(StockEntry):
             return
         
         if self.stock_entry_type == "Material Issue":
-            self.sage_code = create_issue(self.name)
+            self.sage_code = create_issue(self.name, self.ws_code)
 
 
 

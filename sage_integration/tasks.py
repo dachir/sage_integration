@@ -1,7 +1,7 @@
 import frappe
 import pymssql
 from striprtf.striprtf import rtf_to_text
-from sage_integration.stock_sync import stock_sync_kin
+from sage_integration.stock_sync import call_stock
 
 def Rtf_to_text(rtf):
     #rtf = r"{\rtf1\ansi{\fonttbl{\f0 MS Sans Serif;}}\uc0\pard\fs24\pard\ql Material for fumigation Operations in small areas. \par}"
@@ -11,8 +11,8 @@ def Rtf_to_text(rtf):
 def all():
     pass
 
-def around_23_0():
-    stock_sync_kin()
+#def around_23_0():
+#    stock_sync_kin()
 
 def cron():
     conn = pymssql.connect("172.16.0.40:49954", "erpnext", "Xn5uFLyR", "dc7x3v12")
@@ -77,6 +77,7 @@ def cron():
                     'has_batch_no': 1,
                     'create_new_batch': 1,
                     'has_expiry_date': 1 if row['TCLCOD_0'] in ['FG','TG','CHEM'] else 0,
+                    'shelf_life_in_days': 365,
                     'category': row['TSICOD_0'],
                     #'sub_category': row['TSICOD_1'],
                     #'sub_category_2': row['TSICOD_2'],
@@ -91,6 +92,7 @@ def cron():
                     'has_batch_no': 1,
                     'create_new_batch': 1,
                     'has_expiry_date': 1 if row['TCLCOD_0'] in ['FG','TG','CHEM'] else 0,
+                    'shelf_life_in_days': 365,
                     'category': row['TSICOD_0'],
                     'sub_category': row['TSICOD_1'],
                     #'sub_category_2': row['TSICOD_2'],
@@ -105,6 +107,7 @@ def cron():
                     'has_batch_no': 1,
                     'create_new_batch': 1,
                     'has_expiry_date': 1 if row['TCLCOD_0'] in ['FG','TG','CHEM'] else 0,
+                    'shelf_life_in_days': 365,
                     'category': row['TSICOD_0'],
                     'sub_category': row['TSICOD_1'],
                     'sub_category_2': row['TSICOD_2'],
@@ -130,7 +133,8 @@ def cron():
             
             #print(args)
             frappe.get_doc(args).insert()
-            frappe.get_doc({"doctype": "Batch", "batch_id": row['ITMREF_0'], "item" : row['ITMREF_0']}).insert()
+            if row['TCLCOD_0'] != 'FA':
+                frappe.get_doc({"doctype": "Batch", "batch_id": row['ITMREF_0'], "item" : row['ITMREF_0']}).insert()
             frappe.db.commit()
             up_cursor.execute('UPDATE LIVE.ITMMASTER SET ZSYNC_0 = 3 WHERE ITMREF_0 = %s;', row['ITMREF_0'])
             conn2.commit()
@@ -141,7 +145,9 @@ def cron():
 def hourly():
     pass
 def daily():
-    pass
+    call_stock()
+
+
 def weekly():
     pass
 def monthly():
