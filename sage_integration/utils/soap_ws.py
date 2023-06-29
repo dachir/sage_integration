@@ -97,8 +97,55 @@ def create_issue(name,public_name='ZSMO'):
     code = xmlInput2.findall(".//GRP[@ID='SMO0_1']/FLD[@NAME='VCRNUM']")[0].text
 
     return code
+def create_issue_from_reception_in_sage(rec_num):
+    conn = pymssql.connect("172.16.0.40:49954", "erpnext", "Xn5uFLyR", "dc7x3v12")
+    cursor = conn.cursor(as_dict=True)
+    cursor.execute('SELECT d.ITMREF_0, d.QTYSTU_0, MIN(s.LOC_0) AS LOC_0, MIN(s.STA_0) AS STA_0 FROM LIVE.PRECEIPTD d INNER JOIN LIVE.STOJOU s ON s.STOFCY_0 = d.PRHFCY_0 AND d.PTHNUM_0 = s.VCRNUM_0 AND d.PTDLIN_0 = s.VCRLIN_0 WHERE PTHNUM_0 = %s GROUP BY d.ITMREF_0, d.QTYSTU_0;', rec_num)
 
-def create_issue_from_reception_in_sage(json_data):
+    root_xml = ET.Element("PARAM")
+    ET.SubElement(root_xml, 'FLD', {'NAME': 'STOFCY'}).text  = 'M0001'
+    ET.SubElement(root_xml, 'FLD', {'NAME': 'VCRDES'}).text  = rec_num
+    rows = cursor.fetchall()
+    num_rows = len(rows)
+    lines_xml = ET.SubElement(root_xml, 'TAB', {'DIM': '200', 'ID': 'SMO1_1', 'SIZE': str(num_rows)})
+
+    i = 0
+    cursor.execute('SELECT d.ITMREF_0, d.QTYSTU_0, MIN(s.LOC_0) AS LOC_0, MIN(s.STA_0) AS STA_0 FROM LIVE.PRECEIPTD d INNER JOIN LIVE.STOJOU s ON s.STOFCY_0 = d.PRHFCY_0 AND d.PTHNUM_0 = s.VCRNUM_0 AND d.PTDLIN_0 = s.VCRLIN_0 WHERE PTHNUM_0 = %s GROUP BY d.ITMREF_0, d.QTYSTU_0;', rec_num)
+    for row in cursor:
+        conn2 = pymssql.connect("172.16.0.40:49954", "erpnext", "Xn5uFLyR", "dc7x3v12")
+        cursor2 = conn2.cursor(as_dict=True)
+        cursor2.execute("SELECT i.ITMREF_0, i.TCLCOD_0, m.AVC_0 FROM LIVE.ITMMASTER i INNER JOIN LIVE.ITMMVT m ON m.ITMREF_0 = i.ITMREF_0 WHERE m.STOFCY_0 = 'M0001' AND i.ITMREF_0 = '" + row['ITMREF_0'] + "'")
+        first_row = cursor2.fetchone()
+        if (first_row['TCLCOD_0'] == 'MRKT' or first_row['TCLCOD_0'] == 'ENGCO' or ( first_row['TCLCOD_0'] in ['ENG','ENGSS','ENGCS', 'ITEQP', 'ADMFO', 'LABCH', 'OFF','STAT'] and float(first_row['AVC_0']) <= 5000.0)):
+                i = i+ 1
+                line = ET.SubElement(lines_xml, 'LIN', {'NUM': str(i)})
+                product = ET.SubElement(line, 'FLD', {'NAME': 'ITMREF', 'TYPE': 'Char'})
+                product.text = row["ITMREF_0"]
+                qty = ET.SubElement(line, 'FLD', {'NAME': 'QTYPCU', 'TYPE': 'Decimal'})
+                qty.text = str(row["QTYSTU_0"])
+                location = ET.SubElement(line, 'FLD', {'NAME': 'LOC', 'TYPE': 'Char'})
+                location.text = row["LOC_0"]
+                status = ET.SubElement(line, 'FLD', {'NAME': 'STA', 'TYPE': 'Char'})
+                status.text = row["STA_0"]
+                cost_center = ET.SubElement(line, 'FLD', {'NAME': 'CCE1', 'TYPE': 'Char'})
+                cost_center.text = 'CC013' if first_row['TCLCOD_0'] == 'MRKT' else 'CC016' if first_row['TCLCOD_0'] == 'ITEQP' else 'CC017' if first_row['TCLCOD_0'] == 'ADMFO' or first_row['TCLCOD_0'] == 'OFF' or first_row['TCLCOD_0'] == 'STAT' else 'CC010' if first_row['TCLCOD_0'] == 'LABCH' else 'CC008'
+    if i == 0:
+        return -1
+    
+    CContext, client = define_header_json()
+
+    #print(ET.tostring(root_xml))
+
+    with client.settings(strict=False):
+        data = client.service.save(callContext=CContext, publicName='ZSMO', objectXml=ET.tostring(root_xml))
+
+    result = data.resultXml
+    print(data.resultXml)
+    result2 = json.loads(str(result))
+
+    return result2['SMO0_1']['VCRNUM']
+
+def zzzcreate_issue_from_reception_in_sage(json_data):
     root_xml = ET.Element("PARAM")
     ET.SubElement(root_xml, 'FLD', {'NAME': 'STOFCY'}).text  = 'M0001'
     ET.SubElement(root_xml, 'FLD', {'NAME': 'VCRDES'}).text  = json_data["PTH0_1"]["PTHNUM"]
@@ -110,7 +157,7 @@ def create_issue_from_reception_in_sage(json_data):
     for item in json_data["PTH1_2"]:
         cursor.execute("SELECT i.ITMREF_0, i.TCLCOD_0, m.AVC_0 FROM LIVE.ITMMASTER i INNER JOIN LIVE.ITMMVT m ON m.ITMREF_0 = i.ITMREF_0 WHERE m.STOFCY_0 = 'M0001' AND i.ITMREF_0 = '" + item['ITMREF'] + "'")
         for row in cursor:
-            if row['TCLCOD_0'] == 'MRKT' or row['TCLCOD_0'] == 'ENGCO' or ( row['TCLCOD_0'] in ['ENG','ENGSS','ENGCS', 'ITEQP', 'ADMFO', 'LABCH', 'OFF','STAT'] and float(row['AVC_0']) <= 5000.0):
+            if (row['TCLCOD_0'] == 'MRKT' or row['TCLCOD_0'] == 'ENGCO' or ( row['TCLCOD_0'] in ['ENG','ENGSS','ENGCS', 'ITEQP', 'ADMFO', 'LABCH', 'OFF','STAT'] and float(row['AVC_0']) <= 5000.0)):
                 i = i+ 1
                 line = ET.SubElement(lines_xml, 'LIN', {'NUM': str(i)})
                 product = ET.SubElement(line, 'FLD', {'NAME': 'ITMREF', 'TYPE': 'Char'})
@@ -125,6 +172,8 @@ def create_issue_from_reception_in_sage(json_data):
                 #line_desc.text = item.description[:30]
                 cost_center = ET.SubElement(line, 'FLD', {'NAME': 'CCE1', 'TYPE': 'Char'})
                 cost_center.text = 'CC013' if row['TCLCOD_0'] == 'MRKT' else 'CC016' if row['TCLCOD_0'] == 'ITEQP' else 'CC017' if row['TCLCOD_0'] == 'ADMFO' or row['TCLCOD_0'] == 'OFF' or row['TCLCOD_0'] == 'STAT' else 'CC010' if row['TCLCOD_0'] == 'LABCH' else 'CC008'
+
+                
     
     if i == 0:
         return -1
@@ -172,35 +221,83 @@ def create_reception_xml_doc(is_doc):
 
     return root_xml
 
-def create_reception_from_sage(data):
-    items = []
+def create_reception_from_sage(rec_num):
     conn = pymssql.connect("172.16.0.40:49954", "erpnext", "Xn5uFLyR", "dc7x3v12")
     cursor = conn.cursor(as_dict=True)
+    cursor.execute('SELECT d.ITMREF_0, d.QTYSTU_0, MIN(s.LOC_0) AS LOC_0, MIN(s.STA_0) AS STA_0 FROM LIVE.PRECEIPTD d INNER JOIN LIVE.STOJOU s ON s.STOFCY_0 = d.PRHFCY_0 AND d.PTHNUM_0 = s.VCRNUM_0 AND d.PTDLIN_0 = s.VCRLIN_0 WHERE PTHNUM_0 = %s GROUP BY d.ITMREF_0, d.QTYSTU_0;', rec_num)
+    items = []
     line = {}
-    for r in data["PTH1_2"]:
-        cursor.execute("SELECT i.ITMREF_0, i.TCLCOD_0, m.AVC_0 FROM LIVE.ITMMASTER i INNER JOIN LIVE.ITMMVT m ON m.ITMREF_0 = i.ITMREF_0 WHERE m.STOFCY_0 = 'M0001' AND i.ITMREF_0 = '" + r['ITMREF'] + "'")
-        code_cost_center = 'CC013' if row['TCLCOD_0'] == 'MRKT' else 'CC016' if row['TCLCOD_0'] == 'ITEQP' else 'CC017' if row['TCLCOD_0'] == 'ADMFO' or row['TCLCOD_0'] == 'OFF' or row['TCLCOD_0'] == 'STAT' else 'CC010' if row['TCLCOD_0'] == 'LABCH' else 'CC008'
+    i = 0
+    for row in cursor:
+        i = i+ 1
+        conn2 = pymssql.connect("172.16.0.40:49954", "erpnext", "Xn5uFLyR", "dc7x3v12")
+        cursor2 = conn2.cursor(as_dict=True)
+        cursor2.execute("SELECT i.ITMREF_0, i.TCLCOD_0, m.AVC_0 FROM LIVE.ITMMASTER i INNER JOIN LIVE.ITMMVT m ON m.ITMREF_0 = i.ITMREF_0 WHERE m.STOFCY_0 = 'M0001' AND i.ITMREF_0 = '" + row['ITMREF_0'] + "'")
+        first_row = cursor2.fetchone()
+        code_cost_center = 'CC013' if first_row['TCLCOD_0'] == 'MRKT' else 'CC016' if first_row['TCLCOD_0'] == 'ITEQP' else 'CC017' if first_row['TCLCOD_0'] == 'ADMFO' or first_row['TCLCOD_0'] == 'OFF' or first_row['TCLCOD_0'] == 'STAT' else 'CC010' if first_row['TCLCOD_0'] == 'LABCH' else 'CC008'
         cost_center = frappe.get_value("Cost Center", {"cost_center_number" : code_cost_center}, "name")
-        for row in cursor:
+        if (first_row['TCLCOD_0'] == 'MRKT' or first_row['TCLCOD_0'] == 'ENGCO' or ( first_row['TCLCOD_0'] in ['ENG','ENGSS','ENGCS', 'ITEQP', 'ADMFO', 'LABCH', 'OFF','STAT'] and float(first_row['AVC_0']) <= 5000.0)):
             line = {
-                "t_warehouse": r["LOC"] + " - MES",
-                "item_code": r["ITMREF"],
-                "qty": r["QTYSTU"],
-                "basic_rate": row["AVC_0"],
+                "t_warehouse": row["LOC_0"] + " - MES",
+                "item_code": row["ITMREF_0"],
+                "qty": row["QTYSTU_0"],
+                "basic_rate": first_row["AVC_0"],
                 "branch": 'Kinshasa',
                 "cost_center": cost_center,
             }
             items.append(line)
-    br_doc = frappe._dict({
-        "doctype": "Stock Entry",
-        "company": "Marsavco Engg Stock",
-        "stock_entry_type": "Material Receipt",
-        "items" : items
-    })
-    doc = frappe.get_doc(br_doc)
-    doc.insert()
-    doc.submit()
-    frappe.db.commit()
+
+    if i > 0 :
+        br_doc = frappe._dict({
+            "doctype": "Stock Entry",
+            "company": "Marsavco Engg Stock",
+            "stock_entry_type": "Material Receipt",
+            "items" : items
+        })
+        doc = frappe.get_doc(br_doc)
+        doc.insert()
+        doc.submit()
+        frappe.db.commit()   
+        
+        
+
+def zzzcreate_reception_from_sage(data):
+    items = []
+    conn = pymssql.connect("172.16.0.40:49954", "erpnext", "Xn5uFLyR", "dc7x3v12")
+    cursor = conn.cursor(as_dict=True)
+    line = {}
+    i = 0
+    for r in data["PTH1_2"]:
+        cursor.execute("SELECT i.ITMREF_0, i.TCLCOD_0, m.AVC_0 FROM LIVE.ITMMASTER i INNER JOIN LIVE.ITMMVT m ON m.ITMREF_0 = i.ITMREF_0 WHERE m.STOFCY_0 = 'M0001' AND i.ITMREF_0 = '" + r['ITMREF'] + "'")
+        
+        for row in cursor:
+            i = i+ 1
+            code_cost_center = 'CC013' if row['TCLCOD_0'] == 'MRKT' else 'CC016' if row['TCLCOD_0'] == 'ITEQP' else 'CC017' if row['TCLCOD_0'] == 'ADMFO' or row['TCLCOD_0'] == 'OFF' or row['TCLCOD_0'] == 'STAT' else 'CC010' if row['TCLCOD_0'] == 'LABCH' else 'CC008'
+            cost_center = frappe.get_value("Cost Center", {"cost_center_number" : code_cost_center}, "name")
+            if (row['TCLCOD_0'] == 'MRKT' or row['TCLCOD_0'] == 'ENGCO' or ( row['TCLCOD_0'] in ['ENG','ENGSS','ENGCS', 'ITEQP', 'ADMFO', 'LABCH', 'OFF','STAT'] and float(row['AVC_0']) <= 5000.0)):
+                line = {
+                    "t_warehouse": r["LOC"] + " - MES",
+                    "item_code": r["ITMREF"],
+                    "qty": r["QTYSTU"],
+                    "basic_rate": row["AVC_0"],
+                    "branch": 'Kinshasa',
+                    "cost_center": cost_center,
+                }
+                items.append(line)
+
+                
+    
+    if i > 0 :
+        br_doc = frappe._dict({
+            "doctype": "Stock Entry",
+            "company": "Marsavco Engg Stock",
+            "stock_entry_type": "Material Receipt",
+            "items" : items
+        })
+        doc = frappe.get_doc(br_doc)
+        doc.insert()
+        doc.submit()
+        frappe.db.commit()
 
 def define_header_json():
     client = zeep.Client('http://dc7-web.marsavco.com:8124/soap-wsdl/syracuse/collaboration/syracuse/CAdxWebServiceXmlCC?wsdl')
@@ -227,6 +324,23 @@ def define_header_xml():
     return CContext, client
 
 def get_today_receipt():
+    conn = pymssql.connect("172.16.0.40:49954", "erpnext", "Xn5uFLyR", "dc7x3v12")
+    cursor = conn.cursor(as_dict=True)
+
+    cursor.execute("SELECT * FROM LIVE.PRECEIPT WHERE RCPDAT_0 = CONVERT(DATE,GETDATE()) AND ZSYNC_0 <> 3")
+        
+    for row in cursor:
+        print(row['PTHNUM_0'])
+        code = create_issue_from_reception_in_sage(row['PTHNUM_0'])
+        if code != -1 :
+            create_reception_from_sage(row['PTHNUM_0'])
+
+        conn3 = pymssql.connect("172.16.0.40:49954", "erpnext", "Xn5uFLyR", "dc7x3v12")
+        up_cursor = conn3.cursor()
+        up_cursor.execute('UPDATE LIVE.PRECEIPT SET ZSYNC_0 = 3 WHERE PTHNUM_0 = %s;', row['PTHNUM_0'])
+        conn3.commit()
+
+def zzzget_today_receipt():
     today = getdate().strftime('%Y%m%d')
     CContext, client = define_header_json()
 
@@ -238,7 +352,7 @@ def get_today_receipt():
     ]
 
     with client.settings(strict=False):
-        data = client.service.query(callContext=CContext, publicName='ZPTH', objectKeys=key_xml, listSize=1000)
+        data = client.service.query(callContext=CContext, publicName='ZPTH', objectKeys=key_xml, listSize=10000)
 
     result = json.loads(data.resultXml)
 
@@ -253,7 +367,7 @@ def get_today_receipt():
             data = client.service.read(callContext=CContext, publicName='ZPTH', objectKeys=key_xml)
         
         result2 = json.loads(data.resultXml)
-        if result2['PRHFCY'] == "M0001":
+        if result2['PTH0_1']['PRHFCY'] == "M0001":
             code = create_issue_from_reception_in_sage(result2)
             if code != -1 :
                 create_reception_from_sage(result2)
