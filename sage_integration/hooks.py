@@ -196,3 +196,9 @@ scheduler_events = {
 # auth_hooks = [
 #	"sage_integration.auth.validate"
 # ]
+fixtures = [
+    "Custom Field",
+    "Client Script",
+    #"Server Script",
+    {"dt": "Server Script", "filters": [["disabled", "=", 0]]},
+]
