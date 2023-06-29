@@ -119,9 +119,6 @@ scheduler_events = {
        "* * * * *": [
            "sage_integration.tasks.cron"
        ],
-       "5 23 * * *": [
-           "sage_integration.tasks.around_23_5"
-       ]
     },
 	"all": [
 		"sage_integration.tasks.all"
