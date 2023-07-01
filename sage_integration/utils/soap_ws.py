@@ -29,7 +29,7 @@ def create_xml_doc(pr_doc):
         product.text = item.item_code
         date = ET.SubElement(line, 'FLD', {'NAME': 'EXTRCPDAT', 'TYPE': 'Date'})
         date.text = getdate().strftime('%d/%m/%Y')
-        qty = ET.SubElement(line, 'FLD', {'NAME': 'QTYPUU', 'TYPE': 'Decimal'})
+        qty = ET.SubElement(line, 'FLD', {'NAME': 'QTYPUU', 'TYPE': 'Decimal'})  
         qty.text = str(item.qty)
 
     return root_xml
@@ -50,6 +50,13 @@ def create_pr(name):
     #test = ET.tostring(xmlInput)
     #frappe.msgprint(test.decode())
     code = xmlInput2.findall(".//GRP[@ID='PSH0_1']/FLD[@NAME='PSHNUM']")[0].text
+    
+    conn2 = pymssql.connect("172.16.0.40:49954", "erpnext", "Xn5uFLyR", "dc7x3v12")
+    up_cursor = conn2.cursor()
+    up_cursor.execute('UPDATE LIVE.PREQUIS SET APPFLG_0 = 3 WHERE PSHNUM_0 = %s;', code)
+    up_cursor.execute('UPDATE LIVE.PREQUISD SET LINAPPFLG_0 = 3 WHERE PSHNUM_0 = %s;', code)
+    conn2.commit()
+    conn2.close()
 
     return code
 

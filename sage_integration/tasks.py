@@ -2,6 +2,7 @@ import frappe
 import pymssql
 from striprtf.striprtf import rtf_to_text
 from sage_integration.stock_sync import call_stock
+from sage_integration.utils.soap_ws import get_today_receipt
 
 def Rtf_to_text(rtf):
     #rtf = r"{\rtf1\ansi{\fonttbl{\f0 MS Sans Serif;}}\uc0\pard\fs24\pard\ql Material for fumigation Operations in small areas. \par}"
@@ -141,6 +142,8 @@ def cron():
 
     conn.close()
     conn2.close()
+
+    get_today_receipt()
 
 def hourly():
     pass
