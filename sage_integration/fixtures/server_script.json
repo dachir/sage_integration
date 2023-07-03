@@ -136,11 +136,11 @@
   "doctype": "Server Script",
   "doctype_event": "Before Submit",
   "event_frequency": "All",
-  "modified": "2023-06-08 17:57:47.025824",
+  "modified": "2023-07-03 15:51:05.904319",
   "module": null,
   "name": "Set Account Sage Code",
   "reference_doctype": "Stock Entry",
-  "script": "if doc.stock_entry_type == \"Material Issue\":\n    account = frappe.db.sql(\n    \t\t\"\"\"\n    \t\t\tSELECT a.name\n    \t\t\tFROM tabAccount a INNER JOIN `tabCode Compte Comptable` c ON c.sage_code = a.account_number\n    \t\t\tWhere c.web_service = %s\n    \t\t\"\"\",(doc.ws_code), as_dict = 1\n    )\n    \n    for e in doc.items:\n        e.expense_account = account[0].name",
+  "script": "if doc.stock_entry_type == \"Material Issue\":\n    account = frappe.db.sql(\n    \t\t\"\"\"\n    \t\t\tSELECT a.name\n    \t\t\tFROM tabAccount a INNER JOIN `tabCode Compte Comptable` c ON c.sage_code = a.account_number\n    \t\t\tWhere c.web_service = %s and a.company = %s\n    \t\t\"\"\",(doc.ws_code, doc.company), as_dict = 1\n    )\n    \n    for e in doc.items:\n        e.expense_account = account[0].name",
   "script_type": "DocType Event"
  },
  {
