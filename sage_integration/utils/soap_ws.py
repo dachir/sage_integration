@@ -10,7 +10,17 @@ def create_xml_doc(pr_doc):
     root_xml = ET.Element("PARAM")
     #root_xml.attrib["action"] = "create"
 
-    branch = frappe.db.get_list("Material Request Item", filters={'parent': pr_doc.name}, fields=["Max(branch) as branch"])[0].branch
+    #branch = frappe.db.get_list("Material Request Item", filters={'parent': pr_doc.name}, fields=["Max(branch) as branch"])[0].branch
+    
+    branch_doc = frappe.db.sql(
+        """
+            SELECT Max(branch) as branch
+            FROM `tabMaterial Request Item`
+            WHERE parent = %s
+        """, (pr_doc.name), as_dict = 1
+    )
+    branch = branch_doc[0].branch
+
     ET.SubElement(root_xml, 'FLD', {'NAME': 'PSHFCY'}).text  = "M0001" if branch == "Kinshasa" else "M0002"
 
     if frappe.session.user == 'Administrator':
