@@ -23,10 +23,12 @@ def create_xml_doc(pr_doc):
 
     ET.SubElement(root_xml, 'FLD', {'NAME': 'PSHFCY'}).text  = "M0001" if branch == "Kinshasa" else "M0002"
 
-    if frappe.session.user == 'Administrator':
+
+
+    if pr_doc.owner == 'Administrator':
         requester = 'ADMIN'
     else:
-        requester = frappe.get_value("Employee",{"user_id":frappe.session.user},"sage_code")
+        requester = frappe.get_value("Employee",{"user_id":pr_doc.owner},"sage_code")
     ET.SubElement(root_xml, 'FLD', {'NAME': 'REQUSR'}).text = requester
 
     nb = frappe.db.count('Material Request Item', {'parent': pr_doc.name})
