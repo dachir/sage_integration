@@ -4,11 +4,16 @@ from sage_integration.utils.soap_ws import create_pr
 import pymssql
 
 class CustomMaterialRequest(MaterialRequest):
+
+    def before_submit(self):
+        super().before_submit()
+        if self.material_request_type == "Purchase": 
+            self.sage_pr = create_pr(self.name)
     
     def on_submit(self):
         super().on_submit()
         if self.material_request_type == "Purchase": 
-            self.sage_pr = create_pr(self.name)
+            #self.sage_pr = create_pr(self.name)
             self.traitement_details()
         #elif self.material_request_type == "Material Issue":
             #self.sage_pr = create_issue(self.name)
