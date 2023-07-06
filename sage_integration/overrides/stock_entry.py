@@ -20,6 +20,7 @@ class CustomStockEntry(StockEntry):
         
         if self.stock_entry_type == "Material Issue":
             self.sage_code = create_issue(self.name, self.ws_code)
+            frappe.db.set_value(self.doctype,self.name,'sage_code',self.sage_code)
 
 
 
