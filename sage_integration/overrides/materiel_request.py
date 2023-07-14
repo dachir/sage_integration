@@ -2,6 +2,7 @@ import frappe
 from erpnext.stock.doctype.material_request.material_request import MaterialRequest
 from sage_integration.utils.soap_ws import create_pr
 import pymssql
+import html2text
 
 class CustomMaterialRequest(MaterialRequest):
 
@@ -35,7 +36,8 @@ class CustomMaterialRequest(MaterialRequest):
                 """, (self.name, row["ITMREF_0"]), as_dict = 1
             )
             if len(data) > 0:
-                up_cursor.execute('UPDATE LIVE.PREQUISD SET ZTEXT_0 = %s WHERE ITMREF_0 = %s;', (data[0].description,row['ITMREF_0']))
+                h = html2text.HTML2Text()
+                up_cursor.execute('UPDATE LIVE.PREQUISD SET ZTEXT_0 = %s WHERE ITMREF_0 = %s;', (h.handle(data[0].description[:250]),row['ITMREF_0']))
                 up_conn.commit()
             
         up_conn.close()

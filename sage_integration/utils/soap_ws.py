@@ -43,6 +43,8 @@ def create_xml_doc(pr_doc):
         date.text = getdate().strftime('%d/%m/%Y')
         qty = ET.SubElement(line, 'FLD', {'NAME': 'QTYPUU', 'TYPE': 'Decimal'})  
         qty.text = str(item.qty)
+        cost_center = ET.SubElement(line, 'FLD', {'NAME': 'CCE1', 'TYPE': 'Char'})
+        cost_center.text = item.cost_center.split(" - ")[0]
 
     return root_xml
 
