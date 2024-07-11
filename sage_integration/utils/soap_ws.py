@@ -89,7 +89,10 @@ def create_pr(name):
         data = client.service.save(callContext=CContext, publicName='ZPSR', objectXml=ET.tostring(xmlInput))
 
     result = data.resultXml
-    xmlInput2 = ET.fromstring(result)
+    if result:
+        xmlInput2 = ET.fromstring(result)
+    else:
+        xmlInput2 = process_sage_response(data)
     #test = ET.tostring(xmlInput)
     #frappe.msgprint(test.decode())
     code = xmlInput2.findall(".//GRP[@ID='PSH0_1']/FLD[@NAME='PSHNUM']")[0].text
@@ -556,4 +559,14 @@ def create_credit_note(name, public_name='ZCUINVOICE'):
     xmlInput2 = ET.fromstring(unescaped_xml_string)
     code = xmlInput2.findall(".//GRP[@ID='BIC0_1']/FLD[@NAME='NUM']")[0].text
     return code
+
+def process_sage_response(data):
+    # Parse the outer XML string
+    xml_str = ET.tostring(data._raw_elements[1], encoding='unicode')
+    outer_root = etree.fromstring(xml_str)
+    # Extract and unescape the embedded XML content
+    embedded_xml_string = outer_root.text
+    unescaped_xml_string = html.unescape(embedded_xml_string)
+    
+    return ET.fromstring(unescaped_xml_string)
 
