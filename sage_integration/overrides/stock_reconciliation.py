@@ -6,6 +6,7 @@ from frappe.utils import cint, cstr, flt
 from erpnext.stock.utils import get_stock_balance
 
 class CustomStockStockReconciliation(StockReconciliation):
+    pass
     
     def get_items_2(
         self, item_code, warehouse, ignore_empty_stock=True
