@@ -10,7 +10,10 @@
  "field_order": [
   "email",
   "report_to",
-  "expense_approver"
+  "expense_approver",
+  "column_break_hkuo",
+  "is_hod",
+  "role"
  ],
  "fields": [
   {
@@ -28,11 +31,27 @@
    "fieldname": "expense_approver",
    "fieldtype": "Data",
    "label": "Expense Approver"
+  },
+  {
+   "fieldname": "role",
+   "fieldtype": "Link",
+   "label": "Role",
+   "options": "Role"
+  },
+  {
+   "fieldname": "column_break_hkuo",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_hod",
+   "fieldtype": "Check",
+   "label": "Is HoD?"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2023-07-01 12:41:59.037077",
+ "modified": "2025-01-10 16:36:00.895058",
  "modified_by": "Administrator",
  "module": "Sage Integration",
  "name": "WF User",
