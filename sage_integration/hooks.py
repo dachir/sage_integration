@@ -95,8 +95,8 @@ app_license = "MIT"
 # Override standard doctype classes
 
 override_doctype_class = {
-	"Material Request": "sage_integration.overrides.materiel_request.CustomMaterialRequest",
-    "Stock Entry": "sage_integration.overrides.stock_entry.CustomStockEntry",
+	#"Material Request": "sage_integration.overrides.materiel_request.CustomMaterialRequest",
+    #"Stock Entry": "sage_integration.overrides.stock_entry.CustomStockEntry",
     "Stock Reconciliation": "sage_integration.overrides.stock_reconciliation.CustomStockStockReconciliation",
 }
 
